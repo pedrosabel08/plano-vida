@@ -1,0 +1,51 @@
+{
+  "passed": true,
+  "cases": [
+    {
+      "name": "two inserts cannot exceed the book total",
+      "overlapping": true,
+      "outcomes": [
+        "limited",
+        "applied"
+      ]
+    },
+    {
+      "name": "metadata total competes safely with a new log",
+      "overlapping": true,
+      "outcomes": [
+        "applied",
+        "limited"
+      ]
+    },
+    {
+      "name": "correction and removal detect stale version",
+      "overlapping": true,
+      "outcomes": [
+        "applied",
+        "conflict"
+      ]
+    },
+    {
+      "name": "simultaneous retry records only once",
+      "overlapping": true,
+      "outcomes": [
+        "applied",
+        "applied"
+      ]
+    },
+    {
+      "name": "concurrent metadata edits detect stale version",
+      "overlapping": true,
+      "outcomes": [
+        "conflict",
+        "applied"
+      ]
+    }
+  ],
+  "finalProgress": {
+    "current_page": 60,
+    "retry_rows": 1,
+    "total_pages": 80
+  },
+  "cleanupVerified": true
+}

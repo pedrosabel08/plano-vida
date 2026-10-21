@@ -26,3 +26,16 @@ A Fundação foi preservada. A Fase 2 implementa planejamento e desempenho; revi
 - Tipo, unidade, base e modo de frequência ficam protegidos depois do primeiro registro. Título, alvo e vínculo opcional ao objetivo continuam editáveis.
 - Objetivos têm progresso manual independente das metas semanais.
 - Metas podem ser retiradas do cálculo, registros removidos logicamente e vínculos históricos usam RESTRICT.
+
+## Detalhamento da vertical Leitura — Fase 3
+
+- Associações de módulo por ID da área, com bibliotecas separadas por associação.
+- Página atual derivada; página inicial é contexto, não execução semanal.
+- Excesso do total conhecido é rejeitado; conclusão é explícita.
+- Logs corrigíveis e removidos logicamente, protegidos por idempotência e controle transacional por livro.
+- Fonte MODULE/READING/PAGES_READ exclusiva, com escopo explícito. Não há cópia para goal_records.
+- MANUAL com histórico não é convertida silenciosamente. Depois de vinculada a MODULE, a fonte é protegida.
+- Open Library é conveniência desacoplada, com metadados revisáveis, capas opcionais por URL e fallback manual.
+- Sem releitura ou posição física independente nesta vertical.
+
+Modelo e justificativas completos em `fase-3.md`.

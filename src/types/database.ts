@@ -1,4 +1,10 @@
 import type {
+  AreaModule,
+  Book,
+  ReadingLog,
+  ExternalBookReference,
+} from "@/features/reading/types";
+import type {
   Objective,
   Week,
   AreaWeeklyPlan,
@@ -42,6 +48,39 @@ type Table<Row, Insert, Update> = {
 export type Database = {
   public: {
     Tables: {
+      area_modules: Table<
+        AreaModule,
+        Pick<AreaModule, "area_id">,
+        { enabled: boolean }
+      >;
+      books: Table<
+        Book,
+        Omit<Book, "id" | "created_at" | "updated_at">,
+        Partial<
+          Pick<
+            Book,
+            | "title"
+            | "authors"
+            | "total_pages"
+            | "initial_tracking_page"
+            | "status"
+            | "cover_url"
+            | "isbn_10"
+            | "isbn_13"
+          >
+        >
+      >;
+      reading_logs: Table<
+        ReadingLog,
+        Omit<ReadingLog, "id" | "created_at" | "updated_at">,
+        Partial<Pick<ReadingLog, "read_on" | "pages" | "is_deleted">>
+      >;
+      external_book_references: Table<
+        ExternalBookReference,
+        Omit<ExternalBookReference, "id" | "imported_at">,
+        never
+      >;
+
       objectives: Table<
         Objective,
         Omit<Objective, "id" | "created_at" | "updated_at">,
@@ -94,6 +133,31 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      set_reading_module: {
+        Args: { p_area_id: string; p_enabled?: boolean };
+        Returns: string;
+      };
+      save_reading_book: {
+        Args: { p_module_id: string; p_book: Json; p_book_id?: string | null };
+        Returns: string;
+      };
+      save_reading_log: {
+        Args: { p_book_id: string; p_log: Json; p_log_id?: string | null };
+        Returns: string;
+      };
+      save_reading_goal: {
+        Args: {
+          p_start_date: string;
+          p_area_id: string;
+          p_goal: Json;
+          p_book_id?: string | null;
+          p_goal_id?: string | null;
+        };
+        Returns: string;
+      };
+      get_reading_books: { Args: Record<string, never>; Returns: Json };
+      get_reading_data: { Args: { p_area_id: string }; Returns: Json };
+
       ensure_planning_week: { Args: { p_start_date: string }; Returns: string };
       list_objectives: { Args: Record<string, never>; Returns: Json };
       get_planning_data: { Args: { p_start_date: string }; Returns: Json };

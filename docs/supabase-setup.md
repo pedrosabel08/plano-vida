@@ -34,7 +34,7 @@ Google local permanece desabilitado por padrão até você fornecer e configurar
 
 A Fase 2 adiciona objetivos, semanas, planos, metas, fontes e registros com FKs RESTRICT. Áreas com vínculos não podem ser excluídas; metas podem ser retiradas do cálculo. Não há exclusão destrutiva de histórico.
 
-Os tipos em `src/types/database.ts` refletem as duas migrations e os DTOs que preservam números como texto. A geração da CLI pode ser usada para conferir o esquema; não substitua os DTOs de RPC sem revisar a precisão numérica.
+Os tipos em `src/types/database.ts` refletem as migrations aplicadas e os DTOs que preservam números como texto. A geração da CLI pode ser usada para conferir o esquema; não substitua os DTOs de RPC sem revisar a precisão numérica.
 
 ## Evolução contínua — Fase 2
 
@@ -55,3 +55,18 @@ O teste SQL insere duas contas temporárias, usa os papéis authenticated/anon e
 - [SSR Supabase/Next.js](https://supabase.com/docs/guides/auth/server-side/creating-a-client?framework=nextjs)
 - [Google Auth](https://supabase.com/docs/guides/auth/social-login/auth-google)
 - [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security)
+
+## Fase 3 — Leitura
+
+A migration 202610200003_reading_module.sql evolui GoalSource e cria o módulo Leitura. Preserve 001/002; não reexecute alterações manualmente após db push. O relatório `fase-3.md` registra a aplicação e os testes.
+
+```sh
+supabase db push --dry-run
+supabase db push --yes
+supabase migration list
+supabase db query --linked --file supabase/tests/reading-rls.sql
+```
+
+O teste SQL usa BEGIN/ROLLBACK. O runner opcional `node tests/remote/reading-concurrency.mjs` executa transações realmente sobrepostas via CLI: usa uma conta transitória marcada, precisa confirmar fixtures para compartilhá-las entre conexões e remove somente seus dados em finally, verificando a limpeza. Ele não faz parte de npm test nem da aplicação, e nunca usa db reset hospedado. Execute somente em projeto de desenvolvimento/testes explicitamente autorizado.
+
+Open Library não exige chave para a busca pública desta integração. BOOK_CATALOG_CONTACT opcional identifica um contato público do app, apenas no servidor. Não use dados pessoais do usuário ou segredos nesse campo. Cadastro manual permanece disponível sem essa configuração.

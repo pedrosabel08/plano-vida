@@ -102,11 +102,19 @@ export async function saveWeeklyGoal(
   form: FormData,
 ): Promise<ActionState> {
   const { supabase } = await requireOnboardedAccount();
-  const type = field(form, "type");
+  const type =
+    field(form, "measurement_source") === "MODULE"
+      ? "QUANTITY"
+      : field(form, "type");
   const parsed = goalSchema.safeParse({
     title: field(form, "title"),
     type,
-    unit: type === "COMPLETION" ? "conclusão" : field(form, "unit"),
+    unit:
+      field(form, "measurement_source") === "MODULE"
+        ? "páginas"
+        : type === "COMPLETION"
+          ? "conclusão"
+          : field(form, "unit"),
     target: type === "COMPLETION" ? "1" : field(form, "target"),
     basis:
       type === "AVERAGE" || type === "COMPLETION"
@@ -132,7 +140,11 @@ export async function saveWeeklyGoal(
     (id && !z.uuid().safeParse(id).success)
   )
     return { status: "error", message: "Área ou semana inválida." };
-  const { error } = await supabase.rpc("save_weekly_goal", {
+  const moduleSource = field(form, "measurement_source") === "MODULE";
+  const scopeBook = field(form, "scope_book_id");
+  if (scopeBook && !z.uuid().safeParse(scopeBook).success)
+    return { status: "error", message: "Livro inválido." };
+  const args = {
     p_start_date: start.data,
     p_area_id: area.data,
     p_goal: {
@@ -140,7 +152,27 @@ export async function saveWeeklyGoal(
       expected_updated_at: field(form, "expected_updated_at"),
     },
     p_goal_id: id || null,
-  });
+  };
+  let configureSource = moduleSource;
+  if (id) {
+    const current = await supabase
+      .from("goal_sources")
+      .select("kind,book_id")
+      .eq("goal_id", id)
+      .single();
+    if (current.error || !current.data) return failure(current.error || {});
+    if (current.data.kind === "MODULE") {
+      if (!moduleSource || (current.data.book_id || "") !== scopeBook)
+        return failure({ code: "22023" });
+      configureSource = false;
+    }
+  }
+  const { error } = configureSource
+    ? await supabase.rpc("save_reading_goal", {
+        ...args,
+        p_book_id: scopeBook || null,
+      })
+    : await supabase.rpc("save_weekly_goal", args);
   if (error) return failure(error);
   invalidate();
   return { status: "success", message: "Meta semanal salva." };

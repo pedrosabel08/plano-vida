@@ -143,6 +143,12 @@ export function PlanningWorkspace({
                   <span>{formatPercent(result.exact.performance)}</span>
                 )}
               </div>
+              <Link
+                className="text-link"
+                href={"/areas/" + area.id + "/leitura?week=" + start}
+              >
+                Leitura
+              </Link>
               <button
                 className="button secondary"
                 onClick={() => setEditor({ kind: "goal", area })}
@@ -157,6 +163,10 @@ export function PlanningWorkspace({
                   const records = data.records.filter(
                     (r) => r.goal_id === goal.id && !r.is_deleted,
                   );
+                  const source = data.sources.find(
+                    (s) => s.goal_id === goal.id,
+                  );
+                  const moduleSource = source?.kind === "MODULE";
                   return (
                     <article
                       className={
@@ -168,7 +178,8 @@ export function PlanningWorkspace({
                     >
                       <div className="goal-top">
                         <span className="goal-type">
-                          {TYPE_LABELS[goal.type]} · Manual
+                          {TYPE_LABELS[goal.type]} ·{" "}
+                          {moduleSource ? "Leitura" : "Manual"}
                           {goal.basis === "DAILY" ? " · Alvo diário" : ""}
                         </span>
                         <button
@@ -200,31 +211,50 @@ export function PlanningWorkspace({
                           observationUnit={goal.observation_unit}
                         />
                       )}
-                      <div className="goal-footer">
-                        <button
-                          className="button secondary"
-                          disabled={goal.state === "CANCELLED"}
-                          onClick={() =>
-                            setEditor({
-                              kind: "record",
-                              goal,
-                              record:
-                                goal.type === "COMPLETION"
-                                  ? records[0]
-                                  : undefined,
-                            })
-                          }
-                        >
-                          <Plus size={14} />
-                          {goal.type === "COMPLETION"
-                            ? "Atualizar conclusão"
-                            : "Registrar execução"}
-                        </button>
-                        <span>
-                          {records.length}{" "}
-                          {records.length === 1 ? "registro" : "registros"}
-                        </span>
-                      </div>
+                      {moduleSource ? (
+                        <div className="goal-footer">
+                          <Link
+                            className="button secondary"
+                            href={
+                              "/areas/" +
+                              area.id +
+                              "/leitura" +
+                              (source?.book_id ? "/" + source.book_id : "") +
+                              "?week=" +
+                              start
+                            }
+                          >
+                            Registrar leitura
+                          </Link>
+                          <span>Fonte: ReadingLog</span>
+                        </div>
+                      ) : (
+                        <div className="goal-footer">
+                          <button
+                            className="button secondary"
+                            disabled={goal.state === "CANCELLED"}
+                            onClick={() =>
+                              setEditor({
+                                kind: "record",
+                                goal,
+                                record:
+                                  goal.type === "COMPLETION"
+                                    ? records[0]
+                                    : undefined,
+                              })
+                            }
+                          >
+                            <Plus size={14} />
+                            {goal.type === "COMPLETION"
+                              ? "Atualizar conclusão"
+                              : "Registrar execução"}
+                          </button>
+                          <span>
+                            {records.length}{" "}
+                            {records.length === 1 ? "registro" : "registros"}
+                          </span>
+                        </div>
+                      )}
                       {records.length > 0 && (
                         <details className="record-list">
                           <summary>Ver registros</summary>
@@ -318,9 +348,17 @@ export function PlanningWorkspace({
               areaId={editor.area.id}
               start={start}
               objectives={objectives}
+              readingModule={data.area_modules?.find(
+                (m) => m.area_id === editor.area.id,
+              )}
+              readingBooks={data.reading_books}
+              source={data.sources.find((s) => s.goal_id === editor.goal?.id)}
               locked={
                 !!editor.goal &&
-                data.records.some((r) => r.goal_id === editor.goal!.id)
+                (data.sources.some(
+                  (s) => s.goal_id === editor.goal!.id && s.kind === "MODULE",
+                ) ||
+                  data.records.some((r) => r.goal_id === editor.goal!.id))
               }
               onSaved={onSaved}
             />

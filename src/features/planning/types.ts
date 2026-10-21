@@ -1,3 +1,8 @@
+import type {
+  AreaModule,
+  ReadingBook,
+  ReadingLog,
+} from "@/features/reading/types";
 import type { GoalType, GoalSourceKind } from "@/domain/performance/types";
 export type Objective = {
   id: string;
@@ -55,6 +60,11 @@ export type GoalSource = {
   goal_id: string;
   user_id: string;
   kind: GoalSourceKind;
+  module?: "READING" | null;
+  metric?: "PAGES_READ" | null;
+  scope?: "ALL_BOOKS" | "BOOK" | null;
+  area_module_id?: string | null;
+  book_id?: string | null;
   created_at: string;
 };
 export type GoalRecord = {
@@ -76,4 +86,7 @@ export type PlanningData = {
   goals: WeeklyGoal[];
   sources: GoalSource[];
   records: GoalRecord[];
+  area_modules?: AreaModule[];
+  reading_books?: ReadingBook[];
+  reading_logs?: ReadingLog[];
 };

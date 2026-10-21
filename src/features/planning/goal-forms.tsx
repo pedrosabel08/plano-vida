@@ -1,4 +1,7 @@
 "use client";
+import type { AreaModule, ReadingBook } from "@/features/reading/types";
+import type { GoalSource } from "./types";
+
 import { useActionState, useEffect, useState } from "react";
 import {
   saveWeeklyGoal,
@@ -22,7 +25,13 @@ export function GoalForm({
   objectives,
   locked,
   onSaved,
+  readingModule,
+  readingBooks = [],
+  source,
 }: {
+  readingModule?: AreaModule;
+  readingBooks?: ReadingBook[];
+  source?: GoalSource;
   goal?: WeeklyGoal;
   areaId: string;
   start: string;
@@ -34,6 +43,9 @@ export function GoalForm({
     saveWeeklyGoal,
     INITIAL_STATE,
   );
+  const [measurement, setMeasurement] = useState(source?.kind || "MANUAL");
+  const moduleSource = measurement === "MODULE";
+  const moduleOnly = !goal && source?.kind === "MODULE";
   const [type, setType] = useState<GoalType>(goal?.type || "QUANTITY");
   useEffect(() => {
     if (state.status === "success") onSaved(state.message || "Meta salva.");
@@ -49,6 +61,62 @@ export function GoalForm({
         value={goal?.updated_at || ""}
       />
       <label className="field">
+        Fonte da medição
+        <select
+          name="measurement_source"
+          value={measurement}
+          disabled={
+            moduleOnly || locked || (!!goal && source?.kind === "MODULE")
+          }
+          onChange={(e) => {
+            setMeasurement(e.target.value as "MANUAL" | "MODULE");
+            if (e.target.value === "MODULE") setType("QUANTITY");
+          }}
+        >
+          <option value="MANUAL">Registros manuais</option>
+          {(readingModule?.enabled ||
+            (!!goal && source?.kind === "MODULE")) && (
+            <option value="MODULE">Leitura · páginas registradas</option>
+          )}
+        </select>
+      </label>
+      {(moduleOnly || locked || (!!goal && source?.kind === "MODULE")) && (
+        <input type="hidden" name="measurement_source" value={measurement} />
+      )}
+      {moduleSource && (
+        <>
+          <label className="field">
+            Escopo da leitura
+            <select
+              name="scope_book_id"
+              defaultValue={source?.book_id || ""}
+              disabled={!!goal && source?.kind === "MODULE"}
+            >
+              <option value="">Todos os livros desta área</option>
+              {readingBooks
+                .filter((b) => b.area_module_id === readingModule?.id)
+                .map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.title}
+                  </option>
+                ))}
+            </select>
+          </label>
+          {!!goal && source?.kind === "MODULE" && (
+            <input
+              type="hidden"
+              name="scope_book_id"
+              value={source.book_id || ""}
+            />
+          )}
+          <p className="field-help">
+            ReadingLog é a fonte canônica. Páginas iniciais e registros manuais
+            não entram nesta medição. Para alterar o escopo após vincular, crie
+            outra meta.
+          </p>
+        </>
+      )}
+      <label className="field">
         Título da meta
         <input
           name="title"
@@ -63,7 +131,7 @@ export function GoalForm({
         <select
           name="type"
           value={type}
-          disabled={locked}
+          disabled={locked || moduleSource}
           onChange={(e) => setType(e.target.value as GoalType)}
         >
           {Object.entries(TYPE_LABELS).map(([value, label]) => (
@@ -73,7 +141,9 @@ export function GoalForm({
           ))}
         </select>
       </label>
-      {locked && <input type="hidden" name="type" value={type} />}
+      {(locked || moduleSource) && (
+        <input type="hidden" name="type" value={type} />
+      )}
       <p className="field-help">
         {type === "QUANTITY"
           ? "Soma os valores registrados durante a semana."
@@ -99,8 +169,8 @@ export function GoalForm({
             Unidade da meta
             <input
               name="unit"
-              defaultValue={goal?.unit || ""}
-              disabled={locked}
+              defaultValue={moduleSource ? "páginas" : goal?.unit || ""}
+              disabled={locked || moduleSource}
               maxLength={40}
               required
               placeholder={
@@ -112,7 +182,13 @@ export function GoalForm({
               }
             />
           </label>
-          {locked && <input type="hidden" name="unit" value={goal?.unit} />}
+          {(locked || moduleSource) && (
+            <input
+              type="hidden"
+              name="unit"
+              value={moduleSource ? "páginas" : goal?.unit}
+            />
+          )}
         </div>
       )}
       {(type === "QUANTITY" || type === "FREQUENCY") && (

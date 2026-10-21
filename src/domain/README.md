@@ -5,3 +5,5 @@ O motor puro `performance/` implementa as regras v1 de metas, áreas e semanas. 
 Use as frações de `exact` para agregar e apresentar resultados; os números aproximados são conveniências para gráficos, nunca a entrada de outra agregação. A formatação fica em `src/lib/formatting/performance.ts`.
 
 Fontes MANUAL estão implementadas. MODULE/ACTION têm apenas discriminação conceitual; futuros adapters consultarão seus registros canônicos, sem copiá-los para goal_records. Nenhum snapshot foi criado; a versão v1 deverá acompanhar snapshots futuros. Consulte `docs/fase-2.md`.
+
+A Fase 3 adiciona apenas `reading/progress.ts` e um adapter em `features/reading/performance-adapter.ts`. Os arquivos do engine v1 permanecem idênticos. Os dados especializados não são copiados para goal_records. Consulte `docs/fase-3.md`.

@@ -21,6 +21,9 @@ await db.exec(
     "utf8",
   ),
 );
+await db.exec(
+  await readFile("supabase/migrations/202610200003_reading_module.sql", "utf8"),
+);
 let queue = Promise.resolve();
 function serial(task) {
   const result = queue.then(task);
@@ -80,6 +83,29 @@ const server = createServer(async (req, res) => {
       res.end("{}");
       return;
     }
+    if (url.pathname === "/__test/reading" && req.method === "GET") {
+      const result = await serial(async () => ({
+        books: (await db.query("select * from public.books")).rows,
+        logs: (await db.query("select * from public.reading_logs")).rows,
+        sources: (await db.query("select * from public.goal_sources")).rows,
+        manualRecords: (await db.query("select * from public.goal_records"))
+          .rows,
+      }));
+      res.end(JSON.stringify(result));
+      return;
+    }
+    if (url.pathname === "/__test/retry-reading" && req.method === "POST") {
+      const result = await serial(() =>
+        asUser(USER_A, () =>
+          db.query("select public.save_reading_log($1,$2) as id", [
+            body.book_id,
+            body.log,
+          ]),
+        ),
+      );
+      res.end(JSON.stringify(result.rows[0]));
+      return;
+    }
     const token = req.headers.authorization?.replace("Bearer ", "");
     let id;
     try {
@@ -103,6 +129,48 @@ const server = createServer(async (req, res) => {
     }
     const rows = await serial(() =>
       asUser(id, async () => {
+        if (url.pathname === "/rest/v1/rpc/set_reading_module")
+          return (
+            await db.query("select public.set_reading_module($1,$2) as id", [
+              body.p_area_id,
+              body.p_enabled ?? true,
+            ])
+          ).rows[0].id;
+        if (url.pathname === "/rest/v1/rpc/save_reading_book")
+          return (
+            await db.query("select public.save_reading_book($1,$2,$3) as id", [
+              body.p_module_id,
+              body.p_book,
+              body.p_book_id,
+            ])
+          ).rows[0].id;
+        if (url.pathname === "/rest/v1/rpc/save_reading_log")
+          return (
+            await db.query("select public.save_reading_log($1,$2,$3) as id", [
+              body.p_book_id,
+              body.p_log,
+              body.p_log_id,
+            ])
+          ).rows[0].id;
+        if (url.pathname === "/rest/v1/rpc/save_reading_goal")
+          return (
+            await db.query(
+              "select public.save_reading_goal($1,$2,$3,$4,$5) as id",
+              [
+                body.p_start_date,
+                body.p_area_id,
+                body.p_goal,
+                body.p_book_id,
+                body.p_goal_id,
+              ],
+            )
+          ).rows[0].id;
+        if (url.pathname === "/rest/v1/rpc/get_reading_data")
+          return (
+            await db.query("select public.get_reading_data($1) as data", [
+              body.p_area_id,
+            ])
+          ).rows[0].data;
         if (url.pathname === "/rest/v1/rpc/complete_onboarding") {
           await db.query("select public.complete_onboarding($1,$2,$3)", [
             body.p_display_name,
@@ -148,6 +216,13 @@ const server = createServer(async (req, res) => {
               body.p_record_id,
             ])
           ).rows[0].id;
+        if (url.pathname === "/rest/v1/goal_sources")
+          return (
+            await db.query(
+              "select * from public.goal_sources where goal_id=$1 and user_id=$2",
+              [valueOf(url, "goal_id"), id],
+            )
+          ).rows;
         if (url.pathname === "/rest/v1/weekly_goals")
           return (
             await db.query(

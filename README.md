@@ -1,6 +1,6 @@
 # Plano de Vida
 
-Sistema pessoal Plano de Vida — Fundação e planejamento semanal. Next.js App Router + TypeScript + Supabase Auth/PostgreSQL. Tema inicial escuro, interface responsiva e isolamento por usuário.
+Sistema pessoal Plano de Vida — Fundação, planejamento semanal e Leitura. Next.js App Router + TypeScript + Supabase Auth/PostgreSQL. Tema inicial escuro, interface responsiva e isolamento por usuário.
 
 ## Executar
 
@@ -47,12 +47,21 @@ E2E usa Edge instalado no Windows; em Linux/macOS, execute `npx playwright insta
 - Percentual individual acima de 100%, contribuição agregada limitada por meta.
 - Navegação entre semanas e dashboard responsivo.
 
-Módulos especializados, ações, revisão/snapshots, notificações e gravação offline permanecem para fases posteriores.
+## Entregue na Fase 3
+
+- Biblioteca associada por ID a qualquer área, com habilitação explícita.
+- Livros manuais ou por busca na Open Library, sempre revisáveis.
+- Progresso derivado da página inicial e ReadingLogs, sem current_page independente.
+- Metas MODULE/READING/PAGES_READ com escopo de todos os livros da associação ou livro específico.
+- Mesmo engine v1, sem criar GoalRecord duplicado.
+- Correções, remoção lógica, idempotência, RLS e proteção transacional de limites.
+
+Ações, demais módulos especializados, revisão/snapshots, notificações e gravação offline permanecem para fases posteriores.
 
 ## Arquitetura
 
 - `src/app`: rotas e composição; todas as rotas pessoais são dinâmicas e autenticadas.
-- `src/features`: recursos (auth, onboarding, áreas, objetivos e planejamento).
+- `src/features`: recursos (auth, onboarding, áreas, objetivos, planejamento e leitura).
 - `src/components`: primitivas, layout, navegação e privacidade.
 - `src/server`: acesso a dados no servidor, sempre com sessão do usuário.
 - `src/lib`: Supabase e infraestrutura compartilhada.
@@ -60,4 +69,4 @@ Módulos especializados, ações, revisão/snapshots, notificações e gravaçã
 - `supabase/migrations`: mudanças versionadas de esquema e políticas.
 - `tests`: validação, integração e navegador. Fixtures não são importadas pela aplicação.
 
-Consulte [decisões aprovadas](docs/decisions-v1.md), [configuração Supabase](docs/supabase-setup.md) e [relatório da Fundação](docs/fase-1.md) e [relatório da Fase 2](docs/fase-2.md).
+Consulte [decisões aprovadas](docs/decisions-v1.md), [configuração Supabase](docs/supabase-setup.md) e [relatório da Fundação](docs/fase-1.md) e [relatório da Fase 2](docs/fase-2.md) e [relatório de Leitura](docs/fase-3.md).
