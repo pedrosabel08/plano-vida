@@ -1,0 +1,290 @@
+// Ephemeral test adapter only. Never imported by src/ or deployed as an API.
+import { createServer } from "node:http";
+import { readFile } from "node:fs/promises";
+import { PGlite } from "@electric-sql/pglite";
+export const USER_A = "00000000-0000-4000-8000-000000000001";
+const db = new PGlite();
+await db.exec(`
+ create role anon nologin; create role authenticated nologin;
+ create schema auth;
+ create table auth.users(id uuid primary key,raw_user_meta_data jsonb default '{}');
+ create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
+ grant usage on schema auth,public to authenticated,anon;
+ grant execute on function auth.uid() to authenticated,anon;
+`);
+await db.exec(
+  await readFile("supabase/migrations/202610200001_foundation.sql", "utf8"),
+);
+await db.exec(
+  await readFile(
+    "supabase/migrations/202610200002_planning_performance.sql",
+    "utf8",
+  ),
+);
+let queue = Promise.resolve();
+function serial(task) {
+  const result = queue.then(task);
+  queue = result.catch(() => {});
+  return result;
+}
+async function reset() {
+  await db.exec("reset role; truncate auth.users cascade;");
+  await db.query(
+    "insert into auth.users(id,raw_user_meta_data) values ($1,$2)",
+    [USER_A, { full_name: "Pessoa de teste" }],
+  );
+}
+await reset();
+function user(id) {
+  return {
+    id,
+    aud: "authenticated",
+    role: "authenticated",
+    email: "pessoa@teste.invalid",
+    email_confirmed_at: "2026-10-01T12:00:00Z",
+    app_metadata: { provider: "google", providers: ["google"] },
+    user_metadata: { full_name: "Pessoa de teste" },
+    identities: [],
+    created_at: "2026-10-01T12:00:00Z",
+    updated_at: "2026-10-01T12:00:00Z",
+  };
+}
+async function asUser(id, task) {
+  await db.exec("set role authenticated");
+  await db.query("select set_config('request.jwt.claim.sub',$1,false)", [id]);
+  try {
+    return await task();
+  } finally {
+    await db.exec("reset role");
+  }
+}
+function valueOf(url, key) {
+  return url.searchParams.get(key)?.replace(/^eq\./, "");
+}
+const server = createServer(async (req, res) => {
+  try {
+    const url = new URL(req.url, "http://127.0.0.1:54329");
+    const parts = [];
+    for await (const chunk of req) parts.push(chunk);
+    const body = parts.length
+      ? JSON.parse(Buffer.concat(parts).toString())
+      : {};
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Cache-Control", "no-store");
+    if (url.pathname === "/health") {
+      res.end(JSON.stringify({ ok: true }));
+      return;
+    }
+    if (url.pathname === "/__test/reset" && req.method === "POST") {
+      await serial(reset);
+      res.end("{}");
+      return;
+    }
+    const token = req.headers.authorization?.replace("Bearer ", "");
+    let id;
+    try {
+      id = JSON.parse(
+        Buffer.from(token?.split(".")[1] || "", "base64url").toString(),
+      ).sub;
+    } catch {}
+    if (id !== USER_A) {
+      res.statusCode = 401;
+      res.end(JSON.stringify({ message: "No test session" }));
+      return;
+    }
+    if (url.pathname === "/auth/v1/user") {
+      res.end(JSON.stringify(user(id)));
+      return;
+    }
+    if (url.pathname === "/auth/v1/logout") {
+      res.statusCode = 204;
+      res.end();
+      return;
+    }
+    const rows = await serial(() =>
+      asUser(id, async () => {
+        if (url.pathname === "/rest/v1/rpc/complete_onboarding") {
+          await db.query("select public.complete_onboarding($1,$2,$3)", [
+            body.p_display_name,
+            body.p_timezone,
+            body.p_areas,
+          ]);
+          return null;
+        }
+        if (url.pathname === "/rest/v1/rpc/create_area") {
+          return (
+            await db.query("select public.create_area($1,$2,$3) as id", [
+              body.p_name,
+              body.p_icon,
+              body.p_color,
+            ])
+          ).rows[0].id;
+        }
+        if (url.pathname === "/rest/v1/rpc/reorder_areas") {
+          await db.query("select public.reorder_areas($1)", [body.p_ids]);
+          return null;
+        }
+        if (url.pathname === "/rest/v1/rpc/list_objectives")
+          return (await db.query("select public.list_objectives() as data"))
+            .rows[0].data;
+        if (url.pathname === "/rest/v1/rpc/get_planning_data")
+          return (
+            await db.query("select public.get_planning_data($1) as data", [
+              body.p_start_date,
+            ])
+          ).rows[0].data;
+        if (url.pathname === "/rest/v1/rpc/save_weekly_goal")
+          return (
+            await db.query(
+              "select public.save_weekly_goal($1,$2,$3,$4) as id",
+              [body.p_start_date, body.p_area_id, body.p_goal, body.p_goal_id],
+            )
+          ).rows[0].id;
+        if (url.pathname === "/rest/v1/rpc/save_goal_record")
+          return (
+            await db.query("select public.save_goal_record($1,$2,$3) as id", [
+              body.p_goal_id,
+              body.p_record,
+              body.p_record_id,
+            ])
+          ).rows[0].id;
+        if (url.pathname === "/rest/v1/weekly_goals")
+          return (
+            await db.query(
+              "select * from public.weekly_goals where id=$1 and user_id=$2",
+              [valueOf(url, "id"), id],
+            )
+          ).rows;
+        if (url.pathname === "/rest/v1/objectives") {
+          if (req.method === "POST")
+            return (
+              await db.query(
+                "insert into public.objectives(user_id,area_id,title,type,target,current_value,unit,due_date,state) values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning *",
+                [
+                  id,
+                  body.area_id,
+                  body.title,
+                  body.type,
+                  body.target,
+                  body.current_value,
+                  body.unit,
+                  body.due_date,
+                  body.state,
+                ],
+              )
+            ).rows;
+          if (req.method === "PATCH")
+            return (
+              await db.query(
+                "update public.objectives set area_id=$1,title=$2,type=$3,target=$4,current_value=$5,unit=$6,due_date=$7,state=$8 where id=$9 and user_id=$10 and updated_at=$11 returning *",
+                [
+                  body.area_id,
+                  body.title,
+                  body.type,
+                  body.target,
+                  body.current_value,
+                  body.unit,
+                  body.due_date,
+                  body.state,
+                  valueOf(url, "id"),
+                  id,
+                  valueOf(url, "updated_at"),
+                ],
+              )
+            ).rows;
+          if (req.method === "DELETE")
+            return (
+              await db.query(
+                "delete from public.objectives where id=$1 and user_id=$2 returning id",
+                [valueOf(url, "id"), id],
+              )
+            ).rows;
+        }
+        if (url.pathname === "/rest/v1/goal_records" && req.method === "PATCH")
+          return (
+            await db.query(
+              "update public.goal_records set is_deleted=$1 where id=$2 and user_id=$3 and updated_at=$4 returning id",
+              [
+                body.is_deleted,
+                valueOf(url, "id"),
+                id,
+                valueOf(url, "updated_at"),
+              ],
+            )
+          ).rows;
+        if (url.pathname === "/rest/v1/profiles") {
+          if (req.method === "PATCH") {
+            await db.query(
+              "update public.profiles set display_name=$1,timezone=$2 where user_id=$3",
+              [body.display_name, body.timezone, valueOf(url, "user_id")],
+            );
+            return null;
+          }
+          return (
+            await db.query("select * from public.profiles where user_id=$1", [
+              valueOf(url, "user_id") || id,
+            ])
+          ).rows;
+        }
+        if (url.pathname === "/rest/v1/areas") {
+          if (req.method === "PATCH")
+            return (
+              await db.query(
+                "update public.areas set name=$1,icon=$2,color=$3 where id=$4 and user_id=$5 returning *",
+                [
+                  body.name,
+                  body.icon,
+                  body.color,
+                  valueOf(url, "id"),
+                  valueOf(url, "user_id"),
+                ],
+              )
+            ).rows;
+          if (req.method === "DELETE")
+            return (
+              await db.query(
+                "delete from public.areas where id=$1 and user_id=$2 returning id",
+                [valueOf(url, "id"), valueOf(url, "user_id")],
+              )
+            ).rows;
+          return (
+            await db.query(
+              "select * from public.areas where user_id=$1 order by sort_order,id",
+              [valueOf(url, "user_id") || id],
+            )
+          ).rows;
+        }
+        throw new Error("Unsupported fixture endpoint: " + url.pathname);
+      }),
+    );
+    const single = req.headers.accept?.includes(
+      "application/vnd.pgrst.object+json",
+    );
+    if (single && Array.isArray(rows) && rows.length !== 1) {
+      res.statusCode = 406;
+      res.end(
+        JSON.stringify({ message: "Expected one row", code: "PGRST116" }),
+      );
+      return;
+    }
+    res.end(JSON.stringify(single && Array.isArray(rows) ? rows[0] : rows));
+  } catch (error) {
+    res.statusCode = 400;
+    res.end(
+      JSON.stringify({
+        message: error.message,
+        code: error.code || "FIXTURE_ERROR",
+      }),
+    );
+  }
+});
+server.listen(54329, "127.0.0.1", () =>
+  console.log("Ephemeral Supabase test adapter: http://127.0.0.1:54329"),
+);
+for (const signal of ["SIGTERM", "SIGINT"])
+  process.on(signal, () =>
+    server.close(async () => {
+      await db.close();
+      process.exit(0);
+    }),
+  );

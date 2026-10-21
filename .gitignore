@@ -147,3 +147,12 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Plano de Vida — local tooling
+.supabase/
+supabase/.temp/
+playwright-report/
+test-results/
+.sites-runtime/
+
+.next-e2e/

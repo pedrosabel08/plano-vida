@@ -1,0 +1,45 @@
+export const AREA_ICONS = [
+  "book-open",
+  "wallet",
+  "briefcase",
+  "brain",
+  "heart",
+  "target",
+  "sparkles",
+  "coffee",
+  "music",
+  "home",
+  "globe",
+  "leaf",
+] as const;
+export const AREA_COLORS = [
+  "#F4BD55",
+  "#F27DA4",
+  "#9690FF",
+  "#BC95EF",
+  "#47D6C7",
+  "#F49B55",
+  "#80B8F8",
+  "#B8CE78",
+] as const;
+export const SUGGESTED_AREAS = [
+  { name: "Leitura e estudos", icon: "book-open", color: "#F4BD55" },
+  { name: "Finanças", icon: "wallet", color: "#F27DA4" },
+  { name: "Carreira", icon: "briefcase", color: "#9690FF" },
+  { name: "Mente e pessoal", icon: "brain", color: "#BC95EF" },
+  { name: "Saúde", icon: "heart", color: "#47D6C7" },
+] as const;
+export const ICON_LABELS: Record<(typeof AREA_ICONS)[number], string> = {
+  "book-open": "Livro",
+  wallet: "Carteira",
+  briefcase: "Trabalho",
+  brain: "Mente",
+  heart: "Coração",
+  target: "Alvo",
+  sparkles: "Estrelas",
+  coffee: "Café",
+  music: "Música",
+  home: "Casa",
+  globe: "Mundo",
+  leaf: "Folha",
+};

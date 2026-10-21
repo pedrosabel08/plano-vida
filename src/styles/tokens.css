@@ -1,0 +1,62 @@
+:root {
+  color-scheme: dark;
+  --bg: #0f131a;
+  --bg-secondary: #121821;
+  --card: #161c26;
+  --raised: #1d2431;
+  --border: #2b3342;
+  --text: #f4f2fa;
+  --text-secondary: #bec3d6;
+  --muted: #939cb3;
+  --accent: #a399ff;
+  --accent-solid: #6658df;
+  --accent-hover: #7567ef;
+  --accent-soft: #9286ff12;
+  --success: #45d6be;
+  --warning: #f4bd55;
+  --error: #ff7f98;
+  --reading: #f4bd55;
+  --finance: #f27da4;
+  --career: #9690ff;
+  --personal: #bc95ef;
+  --health: #47d6c7;
+  --shadow: 0 4px 24px #00000012;
+  --overlay-shadow: 0 24px 100px #00000070;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --sidebar-width: 242px;
+  --header-height: 104px;
+  --content-max: 1440px;
+  --font-sans:
+    Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --font-serif: Georgia, "Times New Roman", serif;
+}
+/* Prepared token boundary; only dark mode is offered in Phase 1. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f6f7fb;
+  --bg-secondary: #eef0f7;
+  --card: #ffffff;
+  --raised: #f1f2f8;
+  --border: #d5d9e5;
+  --text: #202436;
+  --text-secondary: #505970;
+  --muted: #63708a;
+  --accent: #6252ca;
+  --accent-solid: #6252ca;
+  --accent-hover: #5343b6;
+  --accent-soft: #6252ca10;
+  --shadow: 0 4px 24px #20243608;
+  --overlay-shadow: 0 24px 100px #20243625;
+}
