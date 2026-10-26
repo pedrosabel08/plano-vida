@@ -84,13 +84,45 @@ export async function saveBook(
   return { status: "success", message: "Livro salvo." };
 }
 export async function saveReadingLog(
+  goalId: string | null,
   _: ActionState,
   form: FormData,
 ): Promise<ActionState> {
-  const { supabase } = await requireOnboardedAccount();
+  const { supabase, user } = await requireOnboardedAccount();
   const book = z.uuid().safeParse(field(form, "book_id"));
   const id = field(form, "id");
   if (!book.success || (id && !z.uuid().safeParse(id).success)) return failed();
+  // Goal context is bound by the form, but still treated as untrusted input.
+  // All entry points persist through the same canonical ReadingLog operation.
+  if (goalId) {
+    if (!z.uuid().safeParse(goalId).success) return failed();
+    const { data: source, error: sourceError } = await supabase
+      .from("goal_sources")
+      .select("kind,module,metric,scope,area_module_id,book_id")
+      .eq("user_id", user.id)
+      .eq("goal_id", goalId)
+      .single();
+    if (
+      sourceError ||
+      !source ||
+      source.kind !== "MODULE" ||
+      source.module !== "READING" ||
+      source.metric !== "PAGES_READ" ||
+      !source.area_module_id ||
+      (source.scope !== "ALL_BOOKS" && source.scope !== "BOOK") ||
+      (source.scope === "BOOK" && source.book_id !== book.data)
+    ) {
+      return failed();
+    }
+    const { data: selectedBook, error: bookError } = await supabase
+      .from("books")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("area_module_id", source.area_module_id)
+      .eq("id", book.data)
+      .single();
+    if (bookError || !selectedBook) return failed();
+  }
   const parsed = logSchema.safeParse({
     read_on: field(form, "read_on"),
     pages: field(form, "pages"),

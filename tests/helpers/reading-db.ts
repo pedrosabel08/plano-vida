@@ -11,6 +11,13 @@ export async function readingDatabase() {
     "202610200001_foundation.sql",
     "202610200002_planning_performance.sql",
     "202610200003_reading_module.sql",
+    "202610250001_shared_actions.sql",
+    "202610250002_studies.sql",
+    "202610250003_finances.sql",
+    "202610250004_career.sql",
+    "202610250005_health.sql",
+    "202610250006_dashboard_preferences.sql",
+    "202610250007_specialized_date_guards.sql",
   ])
     await db.exec(await readFile("supabase/migrations/" + f, "utf8"));
   return db;

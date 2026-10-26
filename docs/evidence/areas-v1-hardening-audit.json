@@ -1,0 +1,252 @@
+{
+  "date": "2026-10-26T01:04:25.970Z",
+  "linkedProjectMatchesApp": true,
+  "dryRun": {
+    "upToDate": false,
+    "dryRun": true,
+    "migrations": [
+      "202610250007_specialized_date_guards.sql"
+    ],
+    "seeds": [],
+    "roles": [],
+    "message": "Finished supabase db push."
+  },
+  "applied": {
+    "upToDate": false,
+    "dryRun": false,
+    "migrations": [
+      "202610250007_specialized_date_guards.sql"
+    ],
+    "seeds": [],
+    "roles": [],
+    "message": "Finished supabase db push."
+  },
+  "before": {
+    "actions": 0,
+    "area_modules": 1,
+    "area_weekly_plans": 1,
+    "areas": 6,
+    "books": 1,
+    "external_book_references": 1,
+    "goal_records": 2,
+    "goal_sources": 1,
+    "objectives": 0,
+    "profiles": 1,
+    "reading_logs": 0,
+    "weekly_goals": 1,
+    "weeks": 1
+  },
+  "after": {
+    "actions": 0,
+    "area_modules": 1,
+    "area_weekly_plans": 1,
+    "areas": 6,
+    "books": 1,
+    "external_book_references": 1,
+    "goal_records": 2,
+    "goal_sources": 1,
+    "objectives": 0,
+    "profiles": 1,
+    "reading_logs": 0,
+    "weekly_goals": 1,
+    "weeks": 1
+  },
+  "existingDataCountsUnchanged": true,
+  "audit": [
+    {
+      "audit": {
+        "career_milestones_and_linked_studies": true,
+        "exact_finance_cents": true,
+        "explicit_contributions": true,
+        "fixtures_rolled_back": true,
+        "idempotent_retries": true,
+        "owner_isolation": true,
+        "routine_schedule": true,
+        "sleep_instants": true,
+        "stale_update_rejected": true,
+        "studies_canonical": true
+      }
+    }
+  ],
+  "readingRegression": [
+    {
+      "audit": {
+        "actual": 56,
+        "goal_records": 0,
+        "kind": "MODULE",
+        "manual_write_rejected": true,
+        "metric": "PAGES_READ",
+        "module": "READING",
+        "pages_by_book": [
+          21,
+          35
+        ],
+        "percent": 80,
+        "reading_logs": 2,
+        "scope": "ALL_BOOKS",
+        "score": 8,
+        "target": 70,
+        "transaction": "ROLLBACK"
+      }
+    }
+  ],
+  "security": [
+    {
+      "anon_select": false,
+      "relforcerowsecurity": true,
+      "relname": "area_dashboard_preferences",
+      "relrowsecurity": true
+    },
+    {
+      "anon_select": false,
+      "relforcerowsecurity": true,
+      "relname": "career_commitments",
+      "relrowsecurity": true
+    },
+    {
+      "anon_select": false,
+      "relforcerowsecurity": true,
+      "relname": "career_milestones",
+      "relrowsecurity": true
+    },
+    {
+      "anon_select": false,
+      "relforcerowsecurity": true,
+      "relname": "career_projects",
+      "relrowsecurity": true
+    },
+    {
+      "anon_select": false,
+      "relforcerowsecurity": true,
+      "relname": "career_reviews",
+      "relrowsecurity": true
+    },
+    {
+      "anon_select": false,
+      "relforcerowsecurity": true,
+      "relname": "career_settings",
+      "relrowsecurity": true
+    },
+    {
+      "anon_select": false,
+      "relforcerowsecurity": true,
+      "relname": "finance_budgets",
+      "relrowsecurity": true
+    },
+    {
+      "anon_select": false,
+      "relforcerowsecurity": true,
+      "relname": "finance_categories",
+      "relrowsecurity": true
+    },
+    {
+      "anon_select": false,
+      "relforcerowsecurity": true,
+      "relname": "finance_contributions",
+      "relrowsecurity": true
+    },
+    {
+      "anon_select": false,
+      "relforcerowsecurity": true,
+      "relname": "finance_goals",
+      "relrowsecurity": true
+    },
+    {
+      "anon_select": false,
+      "relforcerowsecurity": true,
+      "relname": "finance_transactions",
+      "relrowsecurity": true
+    },
+    {
+      "anon_select": false,
+      "relforcerowsecurity": true,
+      "relname": "health_routines",
+      "relrowsecurity": true
+    },
+    {
+      "anon_select": false,
+      "relforcerowsecurity": true,
+      "relname": "health_settings",
+      "relrowsecurity": true
+    },
+    {
+      "anon_select": false,
+      "relforcerowsecurity": true,
+      "relname": "routine_checks",
+      "relrowsecurity": true
+    },
+    {
+      "anon_select": false,
+      "relforcerowsecurity": true,
+      "relname": "sleep_logs",
+      "relrowsecurity": true
+    },
+    {
+      "anon_select": false,
+      "relforcerowsecurity": true,
+      "relname": "study_sessions",
+      "relrowsecurity": true
+    },
+    {
+      "anon_select": false,
+      "relforcerowsecurity": true,
+      "relname": "study_subjects",
+      "relrowsecurity": true
+    }
+  ],
+  "migrations": {
+    "migrations": [
+      {
+        "local": "202610200001",
+        "remote": "202610200001",
+        "time": "202610200001"
+      },
+      {
+        "local": "202610200002",
+        "remote": "202610200002",
+        "time": "202610200002"
+      },
+      {
+        "local": "202610200003",
+        "remote": "202610200003",
+        "time": "202610200003"
+      },
+      {
+        "local": "202610250001",
+        "remote": "202610250001",
+        "time": "202610250001"
+      },
+      {
+        "local": "202610250002",
+        "remote": "202610250002",
+        "time": "202610250002"
+      },
+      {
+        "local": "202610250003",
+        "remote": "202610250003",
+        "time": "202610250003"
+      },
+      {
+        "local": "202610250004",
+        "remote": "202610250004",
+        "time": "202610250004"
+      },
+      {
+        "local": "202610250005",
+        "remote": "202610250005",
+        "time": "202610250005"
+      },
+      {
+        "local": "202610250006",
+        "remote": "202610250006",
+        "time": "202610250006"
+      },
+      {
+        "local": "202610250007",
+        "remote": "202610250007",
+        "time": "202610250007"
+      }
+    ],
+    "message": "Migrations listed"
+  }
+}

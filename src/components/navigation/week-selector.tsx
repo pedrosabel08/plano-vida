@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { addDays, mondayForDate, weekLabel } from "@/lib/dates/weeks";
 export function WeekSelector({
@@ -14,7 +14,12 @@ export function WeekSelector({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const href = (date: string) => pathname + "?week=" + date;
+  const searchParams = useSearchParams();
+  const href = (date: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("week", date);
+    return pathname + "?" + params.toString();
+  };
   return (
     <div className="week-toolbar">
       <div className="week-period">

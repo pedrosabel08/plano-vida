@@ -2,7 +2,7 @@ export type AreaModule = {
   id: string;
   user_id: string;
   area_id: string;
-  module: "READING";
+  module: "READING" | "STUDIES";
   enabled: boolean;
   created_at: string;
   updated_at: string;

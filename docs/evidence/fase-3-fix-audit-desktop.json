@@ -1,0 +1,43 @@
+{
+  "database": "PostgreSQL PGlite efêmero com migrations reais",
+  "source": {
+    "goal_id": "47cdd7c2-c82d-44c8-ac91-7b0a4ce8f98e",
+    "user_id": "00000000-0000-4000-8000-000000000001",
+    "kind": "MODULE",
+    "created_at": "2026-10-25T21:36:36.324Z",
+    "module": "READING",
+    "metric": "PAGES_READ",
+    "scope": "ALL_BOOKS",
+    "area_module_id": "52ea5e9d-b5b8-48ac-80a2-d38e65073463",
+    "book_id": null
+  },
+  "reading_logs": [
+    {
+      "id": "bdb4d3bb-ce85-4781-b936-0d4bea130a09",
+      "user_id": "00000000-0000-4000-8000-000000000001",
+      "book_id": "0ed2f535-fd3f-437b-8e36-b84678c38f0c",
+      "read_on": "2026-10-25T00:00:00.000Z",
+      "pages": 21,
+      "operation_id": "5ebb835c-7f4d-45c7-9cd8-ee12e1a202f1",
+      "is_deleted": false,
+      "created_at": "2026-10-25T21:36:36.800Z",
+      "updated_at": "2026-10-25T21:36:36.803Z"
+    },
+    {
+      "id": "0f6dda62-984a-4625-a99a-d12fcaf19145",
+      "user_id": "00000000-0000-4000-8000-000000000001",
+      "book_id": "4082bd29-dca7-4666-9218-0a41edd03b7a",
+      "read_on": "2026-10-25T00:00:00.000Z",
+      "pages": 35,
+      "operation_id": "62701604-76fd-4dd5-ba7b-f3a5c76718ba",
+      "is_deleted": false,
+      "created_at": "2026-10-25T21:36:37.178Z",
+      "updated_at": "2026-10-25T21:36:37.180Z"
+    }
+  ],
+  "goal_records": [],
+  "actual": 56,
+  "target": 70,
+  "percent": 80,
+  "score": 8
+}

@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-25",
+  "environment": "linked-development-supabase",
+  "linkedProjectMatchesApp": true,
+  "migration": "202610250001_shared_actions.sql",
+  "applied": true,
+  "auditScript": "supabase/tests/shared-actions.sql",
+  "audit": {
+    "action_completion_without_pages": true,
+    "owner_isolation": true,
+    "stale_update_rejected": true,
+    "foreign_area_rejected": true,
+    "fixtures_rolled_back": true
+  },
+  "before": {
+    "books": 1,
+    "reading_logs": 0,
+    "goal_records": 2,
+    "weekly_goals": 1,
+    "objectives": 0
+  },
+  "after": {
+    "books": 1,
+    "reading_logs": 0,
+    "goal_records": 2,
+    "weekly_goals": 1,
+    "objectives": 0
+  },
+  "migrationHistoryMatches": true,
+  "auditAccountsRemaining": 0,
+  "persistedActionsAfterAudit": 0
+}

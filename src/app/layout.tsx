@@ -1,4 +1,3 @@
-import "@/styles/reading.css";
 import type { Metadata, Viewport } from "next";
 import "@fontsource/inter/400.css";
 import "@fontsource/inter/500.css";
@@ -7,6 +6,8 @@ import "@fontsource/inter/700.css";
 import "@/styles/tokens.css";
 import "@/styles/globals.css";
 import "@/styles/planning.css";
+import "@/styles/reading.css";
+import "@/styles/specialized.css";
 export const metadata: Metadata = {
   title: { default: "Plano de Vida", template: "%s · Plano de Vida" },
   description:

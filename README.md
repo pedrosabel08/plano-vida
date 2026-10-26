@@ -56,7 +56,13 @@ E2E usa Edge instalado no Windows; em Linux/macOS, execute `npx playwright insta
 - Mesmo engine v1, sem criar GoalRecord duplicado.
 - Correções, remoção lógica, idempotência, RLS e proteção transacional de limites.
 
-Ações, demais módulos especializados, revisão/snapshots, notificações e gravação offline permanecem para fases posteriores.
+O [dashboard de Leitura V1](docs/leitura-v1-dashboard.md) adiciona meta semanal, indicadores diários, gráfico de 14 dias, média, sequência, livros em andamento e ações compartilhadas. A migration `202610250001_shared_actions.sql` é necessária para as ações e já foi aplicada ao projeto de desenvolvimento vinculado.
+
+Estudos, Finanças, Carreira e Saúde (Sono e Saúde Bucal) agora possuem [dashboards especializados V1](docs/areas-v1-entrega.md), persistência no Supabase e ações compartilhadas. A [auditoria e matriz de requisitos](docs/areas-v1-auditoria.md) registra as referências e decisões aprovadas. As migrations `202610250002` a `202610250007` estão aplicadas ao desenvolvimento vinculado.
+
+Na área, use os links especializados do planejamento. Em cada dashboard novo, “Dashboard inicial desta área” define qual das cinco experiências abrir pelo ID da área, inclusive depois de renomeá-la. Leitura continua com sua biblioteca, fontes e registros existentes.
+
+Revisão semanal global/snapshots, recorrência de ações, notificações e gravação offline permanecem para fases posteriores. Carreira inclui um diário de revisão próprio com conquistas e próximos passos, sem gerar notas.
 
 ## Arquitetura
 

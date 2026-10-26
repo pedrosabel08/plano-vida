@@ -4,6 +4,8 @@ import type {
   ReadingLog,
   ExternalBookReference,
 } from "@/features/reading/types";
+import type { AreaAction } from "@/features/actions/types";
+import type { SpecializedFunctions } from "./specialized-rpcs";
 import type {
   Objective,
   Week,
@@ -48,6 +50,21 @@ type Table<Row, Insert, Update> = {
 export type Database = {
   public: {
     Tables: {
+      actions: Table<
+        AreaAction,
+        Omit<AreaAction, "created_at" | "updated_at">,
+        Partial<
+          Pick<
+            AreaAction,
+            | "title"
+            | "book_id"
+            | "objective_id"
+            | "due_on"
+            | "due_time"
+            | "completed"
+          >
+        >
+      >;
       area_modules: Table<
         AreaModule,
         Pick<AreaModule, "area_id">,
@@ -132,7 +149,24 @@ export type Database = {
       >;
     };
     Views: { [_ in never]: never };
-    Functions: {
+    Functions: SpecializedFunctions & {
+      get_area_actions: { Args: { p_area_id: string }; Returns: Json };
+      save_area_action: {
+        Args: {
+          p_action: Json;
+          p_action_id: string;
+          p_expected_updated_at: string | null;
+        };
+        Returns: string;
+      };
+      complete_area_action: {
+        Args: {
+          p_action_id: string;
+          p_completed: boolean;
+          p_expected_updated_at: string;
+        };
+        Returns: string;
+      };
       set_reading_module: {
         Args: { p_area_id: string; p_enabled?: boolean };
         Returns: string;

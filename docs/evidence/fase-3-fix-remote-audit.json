@@ -1,0 +1,38 @@
+{
+  "database": "Supabase vinculado — PostgreSQL real",
+  "verified_on": "2026-10-25",
+  "existing_goal": {
+    "title": "Ler 70 páginas por semana",
+    "kind": "MANUAL",
+    "module": null,
+    "metric": null,
+    "scope": null,
+    "goal_records": 2,
+    "changed": false
+  },
+  "schema": {
+    "reading_logs.book_id.is_nullable": "NO",
+    "foreign_key": "FOREIGN KEY (user_id, book_id) REFERENCES books(user_id, id) ON DELETE RESTRICT",
+    "logs_without_book": 0,
+    "orphan_or_wrong_owner": 0
+  },
+  "transactional_regression": {
+    "script": "supabase/tests/reading-goal-entry.sql",
+    "actual": 56,
+    "goal_records": 0,
+    "kind": "MODULE",
+    "manual_write_rejected": true,
+    "metric": "PAGES_READ",
+    "module": "READING",
+    "pages_by_book": [21, 35],
+    "percent": 80,
+    "reading_logs": 2,
+    "scope": "ALL_BOOKS",
+    "score": 8,
+    "target": 70,
+    "transaction": "ROLLBACK"
+  },
+  "cleanup": {
+    "remaining_test_users": 0
+  }
+}

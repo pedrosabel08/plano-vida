@@ -1,4 +1,5 @@
 import { readingObservations } from "@/features/reading/performance-adapter";
+import { studyObservations } from "@/domain/studies/dashboard";
 import type { PlanningData, WeeklyGoal } from "./types";
 import type { NormalizedGoal } from "@/domain/performance/types";
 import {
@@ -25,14 +26,20 @@ export function normalizeGoal(
     state: goal.state,
     observations:
       source.kind === "MODULE"
-        ? readingObservations(
-            goal,
-            source,
-            data.week!.start_date,
-            data.reading_books || [],
-            data.reading_logs || [],
-            data.area_modules || [],
-          )
+        ? source.module === "STUDIES"
+          ? studyObservations(
+              data.study_sessions || [],
+              goal.area_id,
+              data.week!.start_date,
+            )
+          : readingObservations(
+              goal,
+              source,
+              data.week!.start_date,
+              data.reading_books || [],
+              data.reading_logs || [],
+              data.area_modules || [],
+            )
         : data.records
             .filter((r) => r.goal_id === goal.id && !r.is_deleted)
             .map((r) => ({

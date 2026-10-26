@@ -4,6 +4,7 @@ import type {
   ReadingLog,
 } from "@/features/reading/types";
 import type { GoalType, GoalSourceKind } from "@/domain/performance/types";
+import type { StudySession } from "@/features/studies/types";
 export type Objective = {
   id: string;
   user_id: string;
@@ -60,9 +61,9 @@ export type GoalSource = {
   goal_id: string;
   user_id: string;
   kind: GoalSourceKind;
-  module?: "READING" | null;
-  metric?: "PAGES_READ" | null;
-  scope?: "ALL_BOOKS" | "BOOK" | null;
+  module?: "READING" | "STUDIES" | null;
+  metric?: "PAGES_READ" | "MINUTES_STUDIED" | null;
+  scope?: "ALL_BOOKS" | "BOOK" | "ALL_SUBJECTS" | null;
   area_module_id?: string | null;
   book_id?: string | null;
   created_at: string;
@@ -89,4 +90,5 @@ export type PlanningData = {
   area_modules?: AreaModule[];
   reading_books?: ReadingBook[];
   reading_logs?: ReadingLog[];
+  study_sessions?: StudySession[];
 };

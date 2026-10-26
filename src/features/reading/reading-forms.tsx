@@ -289,6 +289,8 @@ export function ReadingLogForm({
   removing = false,
   timezone,
   onSaved,
+  goalId,
+  onAddBook,
 }: {
   books: ReadingBook[];
   bookId?: string;
@@ -296,14 +298,38 @@ export function ReadingLogForm({
   removing?: boolean;
   timezone: string;
   onSaved: Saved;
+  goalId?: string;
+  onAddBook?: () => void;
 }) {
-  const [s, a, p] = useActionState(saveReadingLog, INITIAL_STATE);
+  const [s, a, p] = useActionState(
+    saveReadingLog.bind(null, goalId || null),
+    INITIAL_STATE,
+  );
   const [operation] = useState(
     () => record?.operation_id || crypto.randomUUID(),
   );
   useEffect(() => {
     if (s.status === "success") onSaved(s.message || "Leitura registrada.");
   }, [s, onSaved]);
+  const fixedBookId = record?.book_id || bookId;
+  if (
+    !removing &&
+    (!books.length || (fixedBookId && !books.some((b) => b.id === fixedBookId)))
+  ) {
+    return (
+      <div className="stack">
+        <p>
+          Nenhum livro disponível. Adicione um livro antes de registrar uma
+          leitura.
+        </p>
+        {onAddBook && (
+          <button className="button primary" onClick={onAddBook}>
+            Adicionar livro
+          </button>
+        )}
+      </div>
+    );
+  }
   return (
     <form action={a} className="stack">
       <input type="hidden" name="id" value={record?.id || ""} />
@@ -330,13 +356,14 @@ export function ReadingLogForm({
             Livro da leitura
             <select
               name="book_id"
+              required
               defaultValue={
                 record?.book_id ||
                 bookId ||
                 books.find((b) => b.status === "READING")?.id ||
                 books[0]?.id
               }
-              disabled={!!record}
+              disabled={!!fixedBookId}
             >
               {books.map((b) => (
                 <option value={b.id} key={b.id}>
@@ -345,8 +372,8 @@ export function ReadingLogForm({
               ))}
             </select>
           </label>
-          {record && (
-            <input type="hidden" name="book_id" value={record.book_id} />
+          {fixedBookId && (
+            <input type="hidden" name="book_id" value={fixedBookId} />
           )}
           <label className="field">
             Data da leitura

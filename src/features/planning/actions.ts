@@ -189,6 +189,17 @@ export async function saveManualRecord(
     (id && !z.uuid().safeParse(id).success)
   )
     return { status: "error", message: "Registro inválido." };
+  const { data: source, error: sourceError } = await supabase
+    .from("goal_sources")
+    .select("kind")
+    .eq("user_id", user.id)
+    .eq("goal_id", goalId)
+    .single();
+  if (sourceError || source?.kind !== "MANUAL")
+    return {
+      status: "error",
+      message: "Esta meta exige registro pelo módulo de origem.",
+    };
   const { data: goal, error: goalError } = await supabase
     .from("weekly_goals")
     .select("type,frequency_mode")

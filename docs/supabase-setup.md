@@ -70,3 +70,28 @@ supabase db query --linked --file supabase/tests/reading-rls.sql
 O teste SQL usa BEGIN/ROLLBACK. O runner opcional `node tests/remote/reading-concurrency.mjs` executa transações realmente sobrepostas via CLI: usa uma conta transitória marcada, precisa confirmar fixtures para compartilhá-las entre conexões e remove somente seus dados em finally, verificando a limpeza. Ele não faz parte de npm test nem da aplicação, e nunca usa db reset hospedado. Execute somente em projeto de desenvolvimento/testes explicitamente autorizado.
 
 Open Library não exige chave para a busca pública desta integração. BOOK_CATALOG_CONTACT opcional identifica um contato público do app, apenas no servidor. Não use dados pessoais do usuário ou segredos nesse campo. Cadastro manual permanece disponível sem essa configuração.
+
+## Dashboard de Leitura V1 — ações compartilhadas
+
+A migration aditiva `202610250001_shared_actions.sql` cria `public.actions`, compartilhada entre áreas, com RLS por proprietário e vínculo opcional a livro/objetivo. Nenhuma tabela anterior é modificada. Foi aplicada ao projeto de desenvolvimento vinculado nesta entrega.
+
+Em outro ambiente, confira o histórico e aplique somente migrations pendentes:
+
+```sh
+supabase migration list --linked
+supabase db push --linked --dry-run
+supabase db push --linked --yes
+supabase db query --linked --file supabase/tests/shared-actions.sql
+```
+
+O script de auditoria cria duas contas temporárias dentro de BEGIN/ROLLBACK. Ele verifica conclusão sem páginas, isolamento por proprietário, conflito de edição e vínculo inválido. O [relatório de entrega](leitura-v1-dashboard.md) contém a validação e as evidências.
+
+## Áreas especializadas V1
+
+Aplicar, em ordem, as migrations aditivas `202610250002_studies.sql`, `202610250003_finances.sql`, `202610250004_career.sql`, `202610250005_health.sql`, `202610250006_dashboard_preferences.sql` e `202610250007_specialized_date_guards.sql`. Todas já estão aplicadas no desenvolvimento vinculado. Não reescrever migrations aplicadas nem executar reset hospedado.
+
+Estudos amplia a associação de módulos com STUDIES e a fonte canônica MINUTES_STUDIED, preservando READING/PAGES_READ. Finanças mantém centavos inteiros; Carreira usa marcos verificáveis; Saúde mantém instantes/fuso da noite e agenda histórica de rotinas. Há 17 tabelas novas com RLS habilitada e forçada, sem acesso anon, exclusão de histórico ou edição de ownership pelo cliente.
+
+O runner explícito `node tests/remote/specialized-audit.mjs` confere URL/projeto vinculado, executa dry-run, aceita somente os nomes de migrations desta entrega, aplica pendências e executa `supabase/tests/specialized-areas.sql` e a regressão SQL de Leitura. Fixtures sempre terminam em ROLLBACK; contagens das tabelas existentes são comparadas antes/depois. Execute apenas no desenvolvimento autorizado. As evidências originais e a verificação adicional de datas ficam em `docs/evidence/areas-v1-remote-audit.json` e `areas-v1-hardening-audit.json`.
+
+O adaptador `tests/fixtures/supabase.mjs` continua exclusivamente local e efêmero. Ele carrega todas as migrations para integração/E2E e nunca é importado pela aplicação. `PLANO_VIDA_REUSE_TEST_SERVERS=1` permite ao Playwright reutilizar os dois servidores de teste iniciados separadamente; por padrão a suíte inicia servidores isolados e não reutiliza processos.

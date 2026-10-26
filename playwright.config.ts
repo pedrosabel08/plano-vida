@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+const reuseTestServers = process.env.PLANO_VIDA_REUSE_TEST_SERVERS === "1";
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: false,
@@ -33,14 +34,14 @@ export default defineConfig({
     {
       command: "node tests/fixtures/supabase.mjs",
       url: "http://127.0.0.1:54329/health",
-      reuseExistingServer: false,
+      reuseExistingServer: reuseTestServers,
       timeout: 60000,
     },
     {
       command:
         "node node_modules/next/dist/bin/next dev --hostname 127.0.0.1 --port 3100",
       url: "http://127.0.0.1:3100/entrar",
-      reuseExistingServer: false,
+      reuseExistingServer: reuseTestServers,
       timeout: 120000,
       env: {
         NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54329",

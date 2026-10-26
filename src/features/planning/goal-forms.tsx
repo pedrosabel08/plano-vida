@@ -28,7 +28,9 @@ export function GoalForm({
   readingModule,
   readingBooks = [],
   source,
+  initialMeasurement = "MANUAL",
 }: {
+  initialMeasurement?: "MANUAL" | "MODULE";
   readingModule?: AreaModule;
   readingBooks?: ReadingBook[];
   source?: GoalSource;
@@ -43,9 +45,12 @@ export function GoalForm({
     saveWeeklyGoal,
     INITIAL_STATE,
   );
-  const [measurement, setMeasurement] = useState(source?.kind || "MANUAL");
+  const [measurement, setMeasurement] = useState(
+    source?.kind || initialMeasurement,
+  );
   const moduleSource = measurement === "MODULE";
-  const moduleOnly = !goal && source?.kind === "MODULE";
+  const moduleOnly =
+    !goal && (source?.kind === "MODULE" || initialMeasurement === "MODULE");
   const [type, setType] = useState<GoalType>(goal?.type || "QUANTITY");
   useEffect(() => {
     if (state.status === "success") onSaved(state.message || "Meta salva.");
@@ -82,6 +87,14 @@ export function GoalForm({
       </label>
       {(moduleOnly || locked || (!!goal && source?.kind === "MODULE")) && (
         <input type="hidden" name="measurement_source" value={measurement} />
+      )}
+      {!moduleSource && readingModule?.enabled && (
+        <p className="field-help">
+          Esta meta usa registros manuais. Para registrar leituras por livro,
+          {locked
+            ? " crie uma nova meta de leitura."
+            : " selecione Leitura como fonte da medição."}
+        </p>
       )}
       {moduleSource && (
         <>

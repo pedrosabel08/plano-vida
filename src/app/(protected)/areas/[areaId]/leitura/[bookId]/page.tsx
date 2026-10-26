@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getReading } from "@/server/repositories/reading";
 import { getPlanning } from "@/server/repositories/planning";
 import { ReadingWorkspace } from "@/features/reading/reading-workspace";
+import { todayInTimezone } from "@/lib/dates/weeks";
 export const metadata = { title: "Livro" };
 export default async function BookPage({
   params,
@@ -23,6 +24,8 @@ export default async function BookPage({
       areas={plan.areas}
       objectives={plan.objectives}
       start={plan.start}
+      today={todayInTimezone(new Date(), reading.profile.timezone)}
+      actions={{ items: [] }}
     />
   );
 }

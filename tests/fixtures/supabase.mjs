@@ -24,13 +24,42 @@ await db.exec(
 await db.exec(
   await readFile("supabase/migrations/202610200003_reading_module.sql", "utf8"),
 );
+await db.exec(
+  await readFile("supabase/migrations/202610250001_shared_actions.sql", "utf8"),
+);
 let queue = Promise.resolve();
+let nextRpcFailure = null;
+await db.exec(
+  await readFile("supabase/migrations/202610250002_studies.sql", "utf8"),
+);
+await db.exec(
+  await readFile("supabase/migrations/202610250003_finances.sql", "utf8"),
+);
+await db.exec(
+  await readFile("supabase/migrations/202610250004_career.sql", "utf8"),
+);
+await db.exec(
+  await readFile("supabase/migrations/202610250005_health.sql", "utf8"),
+);
+await db.exec(
+  await readFile(
+    "supabase/migrations/202610250006_dashboard_preferences.sql",
+    "utf8",
+  ),
+);
 function serial(task) {
   const result = queue.then(task);
   queue = result.catch(() => {});
   return result;
 }
+await db.exec(
+  await readFile(
+    "supabase/migrations/202610250007_specialized_date_guards.sql",
+    "utf8",
+  ),
+);
 async function reset() {
+  nextRpcFailure = null;
   await db.exec("reset role; truncate auth.users cascade;");
   await db.query(
     "insert into auth.users(id,raw_user_meta_data) values ($1,$2)",
@@ -83,6 +112,11 @@ const server = createServer(async (req, res) => {
       res.end("{}");
       return;
     }
+    if (url.pathname === "/__test/fail-next-rpc" && req.method === "POST") {
+      nextRpcFailure = String(body.rpc);
+      res.end("{}");
+      return;
+    }
     if (url.pathname === "/__test/reading" && req.method === "GET") {
       const result = await serial(async () => ({
         books: (await db.query("select * from public.books")).rows,
@@ -90,6 +124,7 @@ const server = createServer(async (req, res) => {
         sources: (await db.query("select * from public.goal_sources")).rows,
         manualRecords: (await db.query("select * from public.goal_records"))
           .rows,
+        actions: (await db.query("select * from public.actions")).rows,
       }));
       res.end(JSON.stringify(result));
       return;
@@ -104,6 +139,47 @@ const server = createServer(async (req, res) => {
         ),
       );
       res.end(JSON.stringify(result.rows[0]));
+      return;
+    }
+    if (url.pathname === "/__test/reading-outsiders" && req.method === "POST") {
+      const books = await serial(async () => {
+        const foreign = "00000000-0000-4000-8000-000000000002";
+        await db.query("insert into auth.users(id) values ($1)", [foreign]);
+        const result = [];
+        for (const owner of [USER_A, foreign]) {
+          result.push(
+            await asUser(owner, async () => {
+              const area = (
+                await db.query(
+                  "select public.create_area('Outra associação','book-open','#F4BD55') as id",
+                )
+              ).rows[0].id;
+              const moduleId = (
+                await db.query("select public.set_reading_module($1) as id", [
+                  area,
+                ])
+              ).rows[0].id;
+              return (
+                await db.query("select public.save_reading_book($1,$2) as id", [
+                  moduleId,
+                  {
+                    title:
+                      owner === foreign
+                        ? "Livro privado"
+                        : "Livro de outra associação",
+                    total_pages: 300,
+                    initial_tracking_page: 0,
+                    authors: [],
+                    status: "READING",
+                  },
+                ])
+              ).rows[0].id;
+            }),
+          );
+        }
+        return result;
+      });
+      res.end(JSON.stringify(books));
       return;
     }
     const token = req.headers.authorization?.replace("Bearer ", "");
@@ -129,6 +205,110 @@ const server = createServer(async (req, res) => {
     }
     const rows = await serial(() =>
       asUser(id, async () => {
+        if (url.pathname === `/rest/v1/rpc/${nextRpcFailure}`) {
+          nextRpcFailure = null;
+          throw new Error("Simulated one-shot test failure");
+        }
+        if (url.pathname === "/rest/v1/rpc/get_area_dashboard")
+          return (
+            await db.query("select public.get_area_dashboard($1) as data", [
+              body.p_area_id,
+            ])
+          ).rows[0].data;
+        if (url.pathname === "/rest/v1/rpc/set_area_dashboard") {
+          await db.query("select public.set_area_dashboard($1,$2)", [
+            body.p_area_id,
+            body.p_dashboard,
+          ]);
+          return null;
+        }
+        if (url.pathname === "/rest/v1/rpc/get_studies_data")
+          return (
+            await db.query("select public.get_studies_data($1) as data", [
+              body.p_area_id,
+            ])
+          ).rows[0].data;
+        if (url.pathname === "/rest/v1/rpc/get_finance_data")
+          return (
+            await db.query("select public.get_finance_data($1) as data", [
+              body.p_area_id,
+            ])
+          ).rows[0].data;
+        if (url.pathname === "/rest/v1/rpc/get_career_data")
+          return (
+            await db.query("select public.get_career_data($1) as data", [
+              body.p_area_id,
+            ])
+          ).rows[0].data;
+        if (url.pathname === "/rest/v1/rpc/get_health_data")
+          return (
+            await db.query("select public.get_health_data($1) as data", [
+              body.p_area_id,
+            ])
+          ).rows[0].data;
+        if (url.pathname === "/rest/v1/rpc/get_study_planning_data")
+          return (
+            await db.query("select public.get_study_planning_data() as data")
+          ).rows[0].data;
+        if (
+          [
+            "save_study_subject",
+            "save_study_session",
+            "save_finance_category",
+            "save_finance_transaction",
+            "save_finance_budget",
+            "save_finance_goal",
+            "save_finance_contribution",
+            "save_career_project",
+            "save_career_milestone",
+            "save_career_commitment",
+            "save_career_setting",
+            "save_career_review",
+            "save_health_setting",
+            "save_sleep_log",
+            "save_health_routine",
+            "save_routine_check",
+          ].some((name) => url.pathname === `/rest/v1/rpc/${name}`)
+        ) {
+          const name = url.pathname.split("/").pop();
+          return (
+            await db.query(`select public.${name}($1,$2,$3) as id`, [
+              body.p_item,
+              body.p_id,
+              body.p_expected,
+            ])
+          ).rows[0].id;
+        }
+        if (url.pathname === "/rest/v1/rpc/save_study_goal")
+          return (
+            await db.query("select public.save_study_goal($1,$2,$3,$4) as id", [
+              body.p_start_date,
+              body.p_area_id,
+              body.p_goal,
+              body.p_goal_id,
+            ])
+          ).rows[0].id;
+        if (url.pathname === "/rest/v1/rpc/get_area_actions")
+          return (
+            await db.query("select public.get_area_actions($1) as data", [
+              body.p_area_id,
+            ])
+          ).rows[0].data;
+        if (url.pathname === "/rest/v1/rpc/save_area_action")
+          return (
+            await db.query("select public.save_area_action($1,$2,$3) as id", [
+              body.p_action,
+              body.p_action_id,
+              body.p_expected_updated_at,
+            ])
+          ).rows[0].id;
+        if (url.pathname === "/rest/v1/rpc/complete_area_action")
+          return (
+            await db.query(
+              "select public.complete_area_action($1,$2,$3) as id",
+              [body.p_action_id, body.p_completed, body.p_expected_updated_at],
+            )
+          ).rows[0].id;
         if (url.pathname === "/rest/v1/rpc/set_reading_module")
           return (
             await db.query("select public.set_reading_module($1,$2) as id", [
@@ -228,6 +408,13 @@ const server = createServer(async (req, res) => {
             await db.query(
               "select * from public.weekly_goals where id=$1 and user_id=$2",
               [valueOf(url, "id"), id],
+            )
+          ).rows;
+        if (url.pathname === "/rest/v1/books")
+          return (
+            await db.query(
+              "select id from public.books where id=$1 and user_id=$2 and area_module_id=$3",
+              [valueOf(url, "id"), id, valueOf(url, "area_module_id")],
             )
           ).rows;
         if (url.pathname === "/rest/v1/objectives") {

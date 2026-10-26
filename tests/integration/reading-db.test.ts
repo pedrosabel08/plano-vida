@@ -123,6 +123,46 @@ it("creates MODULE source without manual mirror", async () => {
     scope: "ALL_BOOKS",
   });
 });
+it("requires exactly one owned Book for every ReadingLog in the actual schema", async () => {
+  expect(
+    (
+      await db.query<{ is_nullable: string }>(
+        "select is_nullable from information_schema.columns where table_schema='public' and table_name='reading_logs' and column_name='book_id'",
+      )
+    ).rows[0].is_nullable,
+  ).toBe("NO");
+  const constraints = (
+    await db.query<{ definition: string }>(
+      "select pg_get_constraintdef(oid) as definition from pg_constraint where conrelid='public.reading_logs'::regclass and contype='f'",
+    )
+  ).rows;
+  expect(
+    constraints.some((c) =>
+      /FOREIGN KEY \(user_id, book_id\) REFERENCES books\(user_id, id\)/.test(
+        c.definition,
+      ),
+    ),
+  ).toBe(true);
+  await expect(
+    as("select public.save_reading_log(null,$1)", [
+      { pages: 21, read_on: "2026-10-20", operation_id: crypto.randomUUID() },
+    ]),
+  ).rejects.toThrow();
+  await expect(
+    as(
+      "insert into public.reading_logs(book_id,read_on,pages,operation_id) values(null,'2026-10-20',21,$1)",
+      [crypto.randomUUID()],
+    ),
+  ).rejects.toThrow();
+  await log(21);
+  expect(
+    (
+      await as(
+        "select l.id from public.reading_logs l join public.books b on (b.user_id,b.id)=(l.user_id,l.book_id)",
+      )
+    ).rows,
+  ).toHaveLength(1);
+});
 it("rejects any manual measurement of a MODULE goal, including direct inserts", async () => {
   const g = await goal();
   await expect(

@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 import { getReading } from "@/server/repositories/reading";
 import { getPlanning } from "@/server/repositories/planning";
 import { ReadingWorkspace } from "@/features/reading/reading-workspace";
-export const metadata = { title: "Leitura e estudos" };
+import { getAreaActions } from "@/server/repositories/actions";
+import { todayInTimezone } from "@/lib/dates/weeks";
+export const metadata = { title: "Leitura" };
 export default async function ReadingPage({
   params,
   searchParams,
@@ -15,6 +17,7 @@ export default async function ReadingPage({
   const reading = await getReading(areaId);
   if (!reading) notFound();
   const plan = await getPlanning(week);
+  const actions = await getAreaActions(areaId);
   return (
     <ReadingWorkspace
       {...reading}
@@ -22,6 +25,8 @@ export default async function ReadingPage({
       areas={plan.areas}
       objectives={plan.objectives}
       start={plan.start}
+      today={todayInTimezone(new Date(), reading.profile.timezone)}
+      actions={actions}
     />
   );
 }

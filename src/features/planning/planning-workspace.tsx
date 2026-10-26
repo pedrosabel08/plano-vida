@@ -4,7 +4,19 @@ import { useState, useCallback, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, ArrowLeft, Target } from "lucide-react";
 import type { Area, Profile } from "@/types/database";
-import type { Objective, PlanningData, WeeklyGoal, GoalRecord } from "./types";
+import type {
+  Objective,
+  PlanningData,
+  WeeklyGoal,
+  GoalRecord,
+  GoalSource,
+} from "./types";
+import type { AreaModule } from "@/features/reading/types";
+import { ReadingLogForm, AddBook } from "@/features/reading/reading-forms";
+import {
+  isReadingSource,
+  booksForReadingGoal,
+} from "@/features/reading/goal-source";
 import { calculatePlanning } from "./normalize";
 import {
   GoalForm,
@@ -25,7 +37,9 @@ import { formatPercent } from "@/lib/formatting/performance";
 import { resolveWeekStart } from "@/lib/dates/weeks";
 import { EmptyState } from "@/components/ui/empty-state";
 type Editor =
-  | { kind: "goal"; area: Area; goal?: WeeklyGoal }
+  | { kind: "goal"; area: Area; goal?: WeeklyGoal; reading?: boolean }
+  | { kind: "reading"; source: GoalSource }
+  | { kind: "book"; module: AreaModule }
   | { kind: "record"; goal: WeeklyGoal; record?: GoalRecord }
   | { kind: "remove"; record: GoalRecord };
 export function PlanningWorkspace({
@@ -149,6 +163,20 @@ export function PlanningWorkspace({
               >
                 Leitura
               </Link>
+              {[
+                ["estudos", "Estudos"],
+                ["financas", "Finanças"],
+                ["carreira", "Carreira"],
+                ["saude", "Saúde"],
+              ].map(([path, label]) => (
+                <Link
+                  key={path}
+                  className="text-link"
+                  href={`/areas/${area.id}/${path}?week=${start}`}
+                >
+                  {label}
+                </Link>
+              ))}
               <button
                 className="button secondary"
                 onClick={() => setEditor({ kind: "goal", area })}
@@ -156,17 +184,35 @@ export function PlanningWorkspace({
                 <Plus size={16} />
                 Nova meta
               </button>
+              {data.area_modules?.some(
+                (m) =>
+                  m.area_id === area.id && m.module === "READING" && m.enabled,
+              ) && (
+                <button
+                  className="button secondary"
+                  onClick={() =>
+                    setEditor({ kind: "goal", area, reading: true })
+                  }
+                >
+                  <Plus size={16} />
+                  Nova meta de leitura
+                </button>
+              )}
             </div>
             {goals.length ? (
               <div className="goal-grid">
                 {goals.map(({ goal, result: goalResult }) => {
-                  const records = data.records.filter(
-                    (r) => r.goal_id === goal.id && !r.is_deleted,
-                  );
                   const source = data.sources.find(
                     (s) => s.goal_id === goal.id,
                   );
-                  const moduleSource = source?.kind === "MODULE";
+                  const readingSource = isReadingSource(source);
+                  const studySource = source?.module === "STUDIES";
+                  const manualSource = source?.kind === "MANUAL";
+                  const records = manualSource
+                    ? data.records.filter(
+                        (r) => r.goal_id === goal.id && !r.is_deleted,
+                      )
+                    : [];
                   return (
                     <article
                       className={
@@ -179,18 +225,33 @@ export function PlanningWorkspace({
                       <div className="goal-top">
                         <span className="goal-type">
                           {TYPE_LABELS[goal.type]} ·{" "}
-                          {moduleSource ? "Leitura" : "Manual"}
+                          {readingSource
+                            ? "Leitura"
+                            : studySource
+                              ? "Estudos"
+                              : manualSource
+                                ? "Manual"
+                                : "Fonte indisponível"}
                           {goal.basis === "DAILY" ? " · Alvo diário" : ""}
                         </span>
-                        <button
-                          className="small-icon-button"
-                          aria-label={"Editar meta " + goal.title}
-                          onClick={() =>
-                            setEditor({ kind: "goal", area, goal })
-                          }
-                        >
-                          <Pencil size={15} />
-                        </button>
+                        {studySource ? (
+                          <Link
+                            className="text-link"
+                            href={`/areas/${area.id}/estudos?week=${start}`}
+                          >
+                            Editar em Estudos
+                          </Link>
+                        ) : (
+                          <button
+                            className="small-icon-button"
+                            aria-label={"Editar meta " + goal.title}
+                            onClick={() =>
+                              setEditor({ kind: "goal", area, goal })
+                            }
+                          >
+                            <Pencil size={15} />
+                          </button>
+                        )}
                       </div>
                       <h3>{goal.title}</h3>
                       {goal.objective_id && (
@@ -211,24 +272,36 @@ export function PlanningWorkspace({
                           observationUnit={goal.observation_unit}
                         />
                       )}
-                      {moduleSource ? (
+                      {readingSource && source ? (
                         <div className="goal-footer">
-                          <Link
+                          <button
                             className="button secondary"
-                            href={
-                              "/areas/" +
-                              area.id +
-                              "/leitura" +
-                              (source?.book_id ? "/" + source.book_id : "") +
-                              "?week=" +
-                              start
+                            disabled={
+                              goal.state === "CANCELLED" ||
+                              !data.area_modules?.some(
+                                (m) =>
+                                  m.id === source.area_module_id && m.enabled,
+                              )
+                            }
+                            onClick={() =>
+                              setEditor({ kind: "reading", source })
                             }
                           >
                             Registrar leitura
-                          </Link>
+                          </button>
                           <span>Fonte: ReadingLog</span>
                         </div>
-                      ) : (
+                      ) : studySource ? (
+                        <div className="goal-footer">
+                          <Link
+                            className="button secondary"
+                            href={`/areas/${area.id}/estudos?week=${start}`}
+                          >
+                            Registrar sessão de estudo
+                          </Link>
+                          <span>Fonte: sessões de estudo</span>
+                        </div>
+                      ) : manualSource ? (
                         <div className="goal-footer">
                           <button
                             className="button secondary"
@@ -254,7 +327,7 @@ export function PlanningWorkspace({
                             {records.length === 1 ? "registro" : "registros"}
                           </span>
                         </div>
-                      )}
+                      ) : null}
                       {records.length > 0 && (
                         <details className="record-list">
                           <summary>Ver registros</summary>
@@ -334,11 +407,15 @@ export function PlanningWorkspace({
               ? editor.goal
                 ? "Editar meta semanal"
                 : "Nova meta semanal"
-              : editor.kind === "remove"
-                ? "Remover registro?"
-                : editor.record
-                  ? "Editar execução"
-                  : "Registrar execução"
+              : editor.kind === "reading"
+                ? "Registrar leitura"
+                : editor.kind === "book"
+                  ? "Adicionar livro"
+                  : editor.kind === "remove"
+                    ? "Remover registro?"
+                    : editor.record
+                      ? "Editar execução"
+                      : "Registrar execução"
           }
           onClose={() => setEditor(null)}
         >
@@ -349,9 +426,10 @@ export function PlanningWorkspace({
               start={start}
               objectives={objectives}
               readingModule={data.area_modules?.find(
-                (m) => m.area_id === editor.area.id,
+                (m) => m.area_id === editor.area.id && m.module === "READING",
               )}
               readingBooks={data.reading_books}
+              initialMeasurement={editor.reading ? "MODULE" : "MANUAL"}
               source={data.sources.find((s) => s.goal_id === editor.goal?.id)}
               locked={
                 !!editor.goal &&
@@ -362,7 +440,34 @@ export function PlanningWorkspace({
               }
               onSaved={onSaved}
             />
-          ) : editor.kind === "record" ? (
+          ) : editor.kind === "reading" ? (
+            <ReadingLogForm
+              books={booksForReadingGoal(
+                editor.source,
+                data.reading_books || [],
+              )}
+              bookId={
+                editor.source.scope === "BOOK"
+                  ? editor.source.book_id || undefined
+                  : undefined
+              }
+              goalId={editor.source.goal_id}
+              timezone={timezone}
+              onSaved={onSaved}
+              onAddBook={() => {
+                const readingModule = data.area_modules?.find(
+                  (m) => m.id === editor.source.area_module_id && m.enabled,
+                );
+                if (readingModule)
+                  setEditor({ kind: "book", module: readingModule });
+              }}
+            />
+          ) : editor.kind === "book" ? (
+            <AddBook module={editor.module} onSaved={onSaved} />
+          ) : editor.kind === "record" &&
+            data.sources.some(
+              (s) => s.goal_id === editor.goal.id && s.kind === "MANUAL",
+            ) ? (
             <RecordForm
               goal={editor.goal}
               record={editor.record}
@@ -370,9 +475,9 @@ export function PlanningWorkspace({
               timezone={timezone}
               onSaved={onSaved}
             />
-          ) : (
+          ) : editor.kind === "remove" ? (
             <RemoveRecordForm record={editor.record} onSaved={onSaved} />
-          )}
+          ) : null}
         </Modal>
       )}
     </>
